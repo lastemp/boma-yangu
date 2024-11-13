@@ -11,3 +11,9 @@ Below are some features contained in the program:
 - Register projects
 - Make deposits using Ether
 - Allocate housing units
+
+## Running the test program
+
+```
+npx hardhat test
+```
