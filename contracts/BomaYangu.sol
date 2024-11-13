@@ -1,43 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.4.16 <0.9.0;
 
-enum HousingUnitType {OneBedroom, TwoBedroom, ThreeBedroom}
-
-struct MemberData {
-      bytes nationalIdentityNumber;
-      bytes spouseNationalIdentityNumber;
-      bool married;
-      bool registered;
-      bool depositAchieved;
-      bool housingAllocated;
-      address owner;
-    }
-struct HousingUnitData {
-      bytes referenceNumber;
-      HousingUnitType unitType;
-      uint256 totalUnitCost;
-      uint256 deposit;
-      uint256 totalPayments;
-      bool housingAllocated;
-      bool initialised;
-      address owner;
-      address admin;
-    }
-struct ProjectData {
-      bytes referenceNumber;
-      //mapping(bytes => HousingUnitData) housingUnits;
-      bytes[] batchHousingUnits;
-      uint256 totalDeposit;
-      uint256 totalPayments;
-      bool completed;
-      uint16 totalHousingUnits;
-      uint16 totalAllocated;
-      bool initialised;
-      address admin;
-    }    
-
 contract Member {
-    /*
     struct MemberData {
       bytes nationalIdentityNumber;
       bytes spouseNationalIdentityNumber;
@@ -47,25 +11,10 @@ contract Member {
       bool housingAllocated;
       address owner;
     }
-    */
 
     MemberData memberData;
 
-    // Constructor code is only run when the contract
-    // is created
-    constructor() {
-        //memberData.owner = msg.sender;
-    }
-
-    // Errors allow you to provide information about
-    // why an operation failed. They are returned
-    // to the caller of the function.
-    //error InvalidMemberDetails(bytes nationalIdentityNumber, bytes errorDescription);
-
     function registerMember(bytes memory nationalIdentityNumber_, bytes memory spouseNationalIdentityNumber_, bool married_) internal returns (MemberData memory) {
-        //require(nationalIdentityNumber_.length > 0, InvalidMemberDetails(nationalIdentityNumber_, bytes("National Identity Number has invalid value.")));
-        //require(((!isMarried_ && spouseNationalIdentityNumber_.length == 0) || (isMarried_ && spouseNationalIdentityNumber_.length > 0)), InvalidMemberDetails(nationalIdentityNumber_, "Spouse National Identity Number has invalid value."));
-        //require(msg.sender == memberData.owner, "Signer address does not match Member.");
         require(nationalIdentityNumber_.length > 0, "National Identity Number has invalid value.");
         require(((!married_ && spouseNationalIdentityNumber_.length == 0) || (married_ && spouseNationalIdentityNumber_.length > 0)), "Spouse National Identity Number has invalid value.");
         memberData.nationalIdentityNumber = nationalIdentityNumber_;
@@ -79,19 +28,18 @@ contract Member {
 }
 
 contract HousingUnit {
-    /*
     enum HousingUnitType {OneBedroom, TwoBedroom, ThreeBedroom}
-
     struct HousingUnitData {
       bytes referenceNumber;
       HousingUnitType unitType;
       uint256 totalUnitCost;
+      uint256 deposit;
       uint256 totalPayments;
       bool housingAllocated;
+      bool initialised;
       address owner;
-      //address admin;
+      address admin;
     }
-    */
 
     HousingUnitData housingUnitData;
 
@@ -105,6 +53,7 @@ contract HousingUnit {
         require(msg.sender == housingUnitData.admin, "Signer address is not authorised to make changes.");
         require(referenceNumber_.length > 0, "Reference Number has invalid value.");
         require(totalUnitCost_ > 0, "Total Unit Cost has invalid value.");
+        require(deposit_ > 0, "Deposit has invalid value.");
         housingUnitData.referenceNumber = referenceNumber_;
         housingUnitData.unitType = unitType_;
         housingUnitData.totalUnitCost = totalUnitCost_;
@@ -116,18 +65,17 @@ contract HousingUnit {
 }
 
 contract Project {
-    /*
     struct ProjectData {
       bytes referenceNumber;
-      mapping(bytes => HousingUnitData) housingUnits;
+      bytes[] batchHousingUnits;
       uint256 totalDeposit;
       uint256 totalPayments;
       bool completed;
       uint16 totalHousingUnits;
       uint16 totalAllocated;
+      bool initialised;
       address admin;
     }
-    */
 
     ProjectData projectData;
 
@@ -137,7 +85,6 @@ contract Project {
         projectData.admin = msg.sender;
     }
 
-    // , bytes memory housingUnitReferenceNumber_, HousingUnitData memory housingUnitData_
     function registerProject(bytes memory referenceNumber_, bool completed_) internal returns (ProjectData storage) {
         require(msg.sender == projectData.admin, "Signer address is not authorised to make changes.");
         require(referenceNumber_.length > 0, "Reference Number has invalid value.");
@@ -151,11 +98,11 @@ contract Project {
         return keccak256(a) == keccak256(b);
     }
 
-    //function updateProject(bytes memory referenceNumber_, bytes memory housingUnitReferenceNumber_, HousingUnitData memory housingUnitData_) internal {
     function updateProject(bytes memory referenceNumber_, bytes memory housingUnitReferenceNumber_) internal {
         require(msg.sender == projectData.admin, "Signer address is not authorised to make changes.");
+        require(referenceNumber_.length > 0, "Reference Number has invalid value.");
+        require(housingUnitReferenceNumber_.length > 0, "Housing unit reference Number has invalid value.");
         require(compareBytes(projectData.referenceNumber, referenceNumber_), "Reference Number cannot be verified.");
-        //projectData.housingUnits[housingUnitReferenceNumber_] = housingUnitData_;
         projectData.batchHousingUnits.push(housingUnitReferenceNumber_);
         projectData.totalHousingUnits += 1;
     }
@@ -242,20 +189,7 @@ contract AffordableHousingProgram is Member, HousingUnit, Project, Vault {
         housingProgramData.admin = msg.sender;
     }
 
-    // , bytes memory projectReferenceNumber_, ProjectData memory projectData_
-    /*
-    function register(bytes memory referenceNumber_) public {
-        require(msg.sender == housingProgramData.admin, "Signer address is not authorised to make changes.");
-        require(referenceNumber_.length > 0, "Reference Number has invalid value.");
-        housingProgramData.totalProjects += 1;
-        //housingProgramData.projects[projectReferenceNumber_] = projectData_;
-    }
-    */
-
     function registerNewMember(bytes memory nationalIdentityNumber_, bytes memory spouseNationalIdentityNumber_, bool married_) external {
-        //require(nationalIdentityNumber_.length > 0, InvalidMemberDetails(nationalIdentityNumber_, bytes("National Identity Number has invalid value.")));
-        //require(((!isMarried_ && spouseNationalIdentityNumber_.length == 0) || (isMarried_ && spouseNationalIdentityNumber_.length > 0)), InvalidMemberDetails(nationalIdentityNumber_, "Spouse National Identity Number has invalid value."));
-        //require(msg.sender == memberData.owner, "Signer address does not match Member.");
         require(nationalIdentityNumber_.length > 0, "National Identity Number has invalid value.");
         require(((!married_ && spouseNationalIdentityNumber_.length == 0) || (married_ && spouseNationalIdentityNumber_.length > 0)), "Spouse National Identity Number has invalid value.");
 
@@ -273,6 +207,7 @@ contract AffordableHousingProgram is Member, HousingUnit, Project, Vault {
         require(referenceNumber_.length > 0, "Reference Number has invalid value.");
         require(projectReferenceNumber_.length > 0, "Project Reference Number has invalid value.");
         require(totalUnitCost_ > 0, "Total Unit Cost has invalid value.");
+        require(deposit_ > 0, "Deposit has invalid value.");
 
         // Check if housing unit is already registered
         HousingUnitData memory housingUnitData = housingProgramData.housingUnits[referenceNumber_];
@@ -281,7 +216,6 @@ contract AffordableHousingProgram is Member, HousingUnit, Project, Vault {
         HousingUnitData memory housingUnitData_ = registerHousingUnit(referenceNumber_, unitType_, totalUnitCost_, deposit_);
         housingProgramData.housingUnits[referenceNumber_] = housingUnitData_;
 
-        //updateProject(projectReferenceNumber_, referenceNumber_, housingUnitData_);
         updateProject(projectReferenceNumber_, referenceNumber_);
     }
 
@@ -295,7 +229,6 @@ contract AffordableHousingProgram is Member, HousingUnit, Project, Vault {
         
         ProjectData storage projectData_ = registerProject(referenceNumber_, completed_);
         housingProgramData.projects[referenceNumber_] = projectData_;
-        //projectData.batchHousingUnits.push(housingUnitReferenceNumber_);
     }
 
     function depositFunds() external payable {
@@ -311,23 +244,19 @@ contract AffordableHousingProgram is Member, HousingUnit, Project, Vault {
         require(msg.sender == admin, "Only the admin can call this function");
         require(msg.sender != member_, "Admin cannot be specified as a member");
         require(referenceNumber_.length > 0, "Reference Number has invalid value.");
+
         MemberData memory memberData = housingProgramData.members[member_];
+
         require(memberData.registered, "Member is not registered");
         require(memberData.depositAchieved, "Member has not yet achieved the required deposit");
         require(!memberData.housingAllocated, "Member has previously been allocated a housing unit");
-        memberData.housingAllocated = true;
+
         HousingUnitData memory housingUnitData = housingProgramData.housingUnits[referenceNumber_];
+
         require(housingUnitData.initialised, "Housing unit not registered");
+        memberData.housingAllocated = true;
         housingUnitData.owner = member_;
         housingUnitData.housingAllocated = true;
     }
 
-    /*
-    function updateExistingProject(bytes memory referenceNumber_, bytes memory housingUnitReferenceNumber_, HousingUnitData memory housingUnitData_) public {
-        require(msg.sender == projectData.admin, "Signer address is not authorised to make changes.");
-        require(referenceNumber_.length > 0, "Reference Number has invalid value.");
-        
-        updateProject(referenceNumber_, housingUnitReferenceNumber_, housingUnitData_);
-    }
-    */
 }
