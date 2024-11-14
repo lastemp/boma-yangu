@@ -231,12 +231,17 @@ contract AffordableHousingProgram is Member, HousingUnit, Project, Vault {
         housingProgramData.projects[referenceNumber_] = projectData_;
     }
 
-    function depositFunds() external payable {
-        require(msg.value > 0, "Deposit amount must be greater than zero");
-        MemberData memory memberData = housingProgramData.members[msg.sender];
+    function depositFunds(bytes memory referenceNumber_) external payable {
+        require(msg.value > 0, "Amount must be greater than zero");
+        require(referenceNumber_.length > 0, "Reference Number has invalid value.");
+        MemberData storage memberData = housingProgramData.members[msg.sender];
         require(memberData.registered, "Member is not registered");
+        HousingUnitData memory housingUnitData = housingProgramData.housingUnits[referenceNumber_];
+        require(housingUnitData.initialised, "Housing unit not registered");
+        require(msg.value == housingUnitData.deposit, "Amount must be equal to housing unit deposit amount");
 
         deposit();
+        memberData.depositAchieved = true;
         
     }
     
@@ -245,18 +250,26 @@ contract AffordableHousingProgram is Member, HousingUnit, Project, Vault {
         require(msg.sender != member_, "Admin cannot be specified as a member");
         require(referenceNumber_.length > 0, "Reference Number has invalid value.");
 
-        MemberData memory memberData = housingProgramData.members[member_];
+        MemberData storage memberData = housingProgramData.members[member_];
 
         require(memberData.registered, "Member is not registered");
         require(memberData.depositAchieved, "Member has not yet achieved the required deposit");
         require(!memberData.housingAllocated, "Member has previously been allocated a housing unit");
 
-        HousingUnitData memory housingUnitData = housingProgramData.housingUnits[referenceNumber_];
+        HousingUnitData storage housingUnitData = housingProgramData.housingUnits[referenceNumber_];
 
         require(housingUnitData.initialised, "Housing unit not registered");
         memberData.housingAllocated = true;
         housingUnitData.owner = member_;
         housingUnitData.housingAllocated = true;
+    }
+
+    function getMemberData(address member_) external view returns (MemberData memory) {
+        return housingProgramData.members[member_];
+    }
+
+    function getHousingUnitData(bytes memory referenceNumber_) external view returns (HousingUnitData memory) {
+        return housingProgramData.housingUnits[referenceNumber_];
     }
 
 }
